@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!--
+spring security的一般认证逻辑是:
+首先将客户端传递的用户名和密码封装成一个Authentication对象作为authenticate()方法的入参。
+然后从Authentication对象中获取用户名，再使用定义的UserDetailesService接口的loadUserByUsername(String name)方法在存储中查询返回一个UserDetailes对象（封装了用户名，密码，权限列表）
+找到后将UserDetailes对象和Authentication对象中的密码做校对。
+校对成功用户认证就成功了
+最后将用户信息（含身份信息、细节信息、密码、权限等）封装成一个对象返回，参考UsernamePasswordAuthenticationToken对象。
+最最后，会自动将这个对象交给系统SecurityContextHolder中（功能类似Session），以便后期随时取用
+    -->
+
+    <!--spring-security开启权限 权限控制 ：方法级别的权限控制-->
+    <security:global-method-security pre-post-annotations="enabled"
+        jsr250-annotations="enabled" secured-annotations="enabled"
+    ></security:global-method-security>
+
+    <!-- 配置不拦截的资源 -->
+    <security:http pattern="/login.jsp" security="none"/>
+    <security:http pattern="/failer.jsp" security="none"/>
+    <security:http pattern="/css/**" security="none"/>
+    <security:http pattern="/img/**" security="none"/>
+    <security:http pattern="/plugins/**" security="none"/>
+
+    <!--
+        配置具体的规则
+        auto-config="true"	不用自己编写登录的页面，框架提供默认登录页面
+        use-expressions="false"	是否使用SPEL表达式（没学习过）
+    -->
+    <security:http auto-config="true" use-expressions="true">
+        <!-- 配置具体的拦截的规则
+        pattern="请求路径的规则":表示对哪些url进行权限控制
+        access="访问系统的人，必须有ROLE_USER的角色" -->
+        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')"/>
+        <!-- 定义跳转的具体的页面 -->
+        <security:form-login
+                login-page="/login.jsp"
+                login-processing-url="/login.do"
+                default-target-url="/index.jsp"
+                authentication-failure-url="/failer.jsp"
+                authentication-success-forward-url="/pages/main.jsp"
+        />
+        <!-- token-validity-seconds: 有效秒数 -->
+        <security:remember-me token-repository-ref="jdbcTokenRepository" token-validity-seconds="3600"/>
+        <!-- 关闭跨域请求 -->
+        <security:csrf disabled="true"/>
+        <!-- 退出 -->
+        <security:logout invalidate-session="true" logout-url="/logout.do" logout-success-url="/login.jsp" />
+    </security:http>
+
+    <!-- 切换成数据库中的用户名和密码 -->
+    <security:authentication-manager>
+        <!--在com.itheima.service 下实现了IuserService接口的类IUserServiceImpl（bean）-->
+        <security:authentication-provider user-service-ref="userService">
+            <!-- 配置密码加密的方式-->
+            <security:password-encoder ref="passwordEncoder"/>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <!-- 配置加密类 -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <bean id="jdbcTokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 系统启动自动创建，第一次的时候打开，后来需要关闭 -->
+        <!-- <property name="createTableOnStartup" value="true"/>-->
+    </bean>
+</beans>

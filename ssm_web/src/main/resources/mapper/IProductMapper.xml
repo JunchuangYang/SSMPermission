@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.IProductDao">
+
+    <sql id="productSql">
+        id,productNum,productName,cityName,departureTime,productPrice,productDesc,productStatus
+    </sql>
+
+    <!--根据id删除产品信息-->
+    <delete id="deleteById" parameterType="java.lang.String">
+        delete from product where id=#{id}
+    </delete>
+
+    <!--修改产品信息-->
+    <update id="updateProduct" parameterType="com.itheima.domain.Product">
+        update product
+        set productNum=#{productNum},productName=#{productName},cityName=#{cityName},departureTime=#{departureTime},productPrice=#{productPrice},productDesc=#{productDesc},productStatus=#{productStatus}
+        where id=#{id}
+    </update>
+
+    <!--根据id查询产品信息-->
+    <select id="findById" parameterType="java.lang.String" resultType="com.itheima.domain.Product">
+        select
+        <include refid="productSql"></include>
+        from product where id=#{id} limit 1
+    </select>
+
+    <!--根据productNum查询产品信息-->
+    <select id="findByNum" parameterType="java.lang.String" resultType="com.itheima.domain.Product">
+        select
+        <include refid="productSql"></include>
+        from product where productNum=#{productNum} limit 1
+    </select>
+
+    <!--添加产品信息-->
+    <insert id="addProduct" parameterType="com.itheima.domain.Product">
+        insert into product(id,productNum,productName,cityName,departureTime,productPrice,productDesc,productStatus)
+        values(#{id},#{productNum},#{productName},#{cityName},#{departureTime},#{productPrice},#{productDesc},#{productStatus})
+    </insert>
+
+    <!--查询全部产品信息-->
+    <select id="findAll" parameterType="java.lang.String" resultType="com.itheima.domain.Product">
+        select
+        <include refid="productSql"></include>
+        from product
+        <where>
+            1=1
+            <if test="fuzzyName!=null and fuzzyName!=''">
+                and productName like concat('%',#{fuzzyName},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.IOrdersDao">
+
+    <!--订单删除-->
+    <delete id="deleteById" parameterType="java.lang.String">
+        delete from orders where id=#{id}
+    </delete>
+
+    <!--订单详情-->
+    <resultMap id="selorders" type="com.itheima.domain.Orders">
+        <id column="id" property="id"></id>
+        <result column="orderNum" property="orderNum"></result>
+        <result column="orderTime" property="orderTime"></result>
+        <result column="peopleCount" property="peopleCount"></result>
+        <result column="orderDesc" property="orderDesc"></result>
+        <result column="payType" property="payType"></result>
+        <result column="orderStatus" property="orderStatus"></result>
+        <association column="productId" property="product" javaType="com.itheima.domain.Product">
+            <id column="productId" property="id"></id>
+            <result column="productNum" property="productNum"></result>
+            <result column="productName" property="productName"></result>
+            <result column="cityName" property="cityName"></result>
+            <result column="departureTime" property="departureTime"></result>
+            <result column="productPrice" property="productPrice"></result>
+            <result column="productDesc" property="productDesc"></result>
+            <result column="productStatus" property="productStatus"></result>
+        </association>
+        <association column="memberId" property="member" javaType="com.itheima.domain.Member">
+            <id column="memberId" property="id"></id>
+            <result column="membername" property="name"></result>
+            <result column="nickName" property="nickName"></result>
+            <result column="phoneNum" property="phoneNum"></result>
+            <result column="email" property="email"></result>
+        </association>
+        <collection property="travellers" ofType="com.itheima.domain.Traveller">
+            <id column="travellerId" property="id"></id>
+            <result column="travellername" property="name"></result>
+            <result column="sex" property="sex"></result>
+            <result column="travellerphonenum" property="phoneNum"></result>
+            <result column="credentialsType" property="credentialsType"></result>
+            <result column="credentialsNum" property="credentialsNum"></result>
+            <result column="travellerType" property="travellerType"></result>
+        </collection>
+    </resultMap>
+    <select id="findById" parameterType="java.lang.String" resultMap="selorders">
+        select o.*,p.*,m.*,t.*,ot.travellerId travellerId,m.name membername,t.NAME travellername ,t.phoneNum travellerphonenum from orders o
+        left join order_traveller ot on o.id=ot.orderId
+        left join traveller t on t.id=ot.travellerId
+        left join product p on o.productId=p.id
+        left join member m on o.memberId=m.id
+        where o.id=#{id}
+    </select>
+
+    <!--订单添加-->
+    <insert id="addOrders" parameterType="com.itheima.domain.Orders">
+        insert into orders(id,orderNum,orderTime,peopleCount,orderDesc,payType,orderStatus,productId,memberId)
+        values(#{id},#{orderNum},#{orderTime},#{peopleCount},#{orderDesc},#{payType},#{orderStatus},#{product.id},#{member.id})
+    </insert>
+
+    <!--根据订单编号查找订单-->
+    <select id="findByNum" parameterType="java.lang.String" resultType="java.lang.String">
+        select
+        id
+        from orders
+        where orderNum=#{orderNum}
+    </select>
+
+    <!--订单全部查询，模糊查询-->
+    <resultMap id="ordersMap" type="com.itheima.domain.Orders">
+        <id column="id" property="id"></id>
+        <result column="orderNum" property="orderNum"></result>
+        <result column="orderTime" property="orderTime"></result>
+        <result column="peopleCount" property="peopleCount"></result>
+        <result column="orderDesc" property="orderDesc"></result>
+        <result column="payType" property="payType"></result>
+        <result column="orderStatus" property="orderStatus"></result>
+        <association column="productId" property="product" javaType="com.itheima.domain.Product">
+            <id column="productId" property="id"></id>
+            <result column="productNum" property="productNum"></result>
+            <result column="productName" property="productName"></result>
+            <result column="cityName" property="cityName"></result>
+            <result column="departureTime" property="departureTime"></result>
+            <result column="productPrice" property="productPrice"></result>
+            <result column="productDesc" property="productDesc"></result>
+            <result column="productStatus" property="productStatus"></result>
+        </association>
+        <association column="memberId" property="member" javaType="com.itheima.domain.Member">
+            <id column="memberId" property="id"></id>
+            <result column="name" property="name"></result>
+            <result column="nickName" property="nickName"></result>
+            <result column="phoneNum" property="phoneNum"></result>
+            <result column="email" property="email"></result>
+        </association>
+    </resultMap>
+    <select id="findAll" parameterType="java.lang.String" resultType="com.itheima.domain.Orders" resultMap="ordersMap">
+        select
+        o.id,o.orderNum,o.orderTime,o.peopleCount,o.orderDesc,o.payType,o.orderStatus,m.name,p.productName
+        from orders o
+        left join product p on o.productId=p.id
+        left join member m on o.memberId=m.id
+        <where>
+            1=1
+            <if test="fuzzyName!=null and fuzzyName!=''">
+                and productName like concat('%',#{fuzzyName},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

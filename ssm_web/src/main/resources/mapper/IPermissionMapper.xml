@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.IPermissionDao">
+
+    <!--资源权限详情-->
+    <select id="findById" resultMap="selAll">
+        select pid,permissionName,url from permission where pid=#{id} limit 1
+    </select>
+
+    <!--role_permission表的权限删除-->
+    <delete id="deleteRolePermissionById" parameterType="java.lang.String">
+        delete from role_permission where permissionId=#{id}
+    </delete>
+
+    <!--权限删除-->
+    <delete id="deleteById" parameterType="java.lang.String">
+        delete from permission where pid=#{id}
+    </delete>
+
+    <!--权限添加-->
+    <insert id="addPermission" parameterType="com.itheima.domain.Permission">
+        insert into permission(pid,permissionName,url) values(#{id},#{permissionName},#{url})
+    </insert>
+
+    <!--查询全部权限信息-->
+    <resultMap id="selAll" type="com.itheima.domain.Permission">
+        <id column="pid" property="id"></id>
+        <result column="permissionName" property="permissionName"></result>
+        <result column="url" property="url"></result>
+    </resultMap>
+    <select id="findAll" resultType="com.itheima.domain.Permission"  resultMap="selAll">
+        select pid,permissionName,url from permission
+    </select>
+
+</mapper>

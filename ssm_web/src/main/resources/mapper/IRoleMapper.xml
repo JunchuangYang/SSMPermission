@@ -1,0 +1,67 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.IRoleDao">
+    <!--添加权限-->
+    <insert id="addPermissionToRole" parameterType="java.lang.String">
+        insert into role_permission(roleId,permissionId) values(#{roleId},#{permissionId})
+    </insert>
+
+    <!--添加权限前，查询所有当前该角色没有关联的权限-->
+    <resultMap id="findAllPermission" type="com.itheima.domain.Permission">
+        <id column="pid" property="id"></id>
+        <result column="permissionName" property="permissionName"></result>
+        <result column="url" property="url"></result>
+    </resultMap>
+    <select id="findOtherPermissions" parameterType="java.lang.String" resultType="com.itheima.domain.Permission" resultMap="findAllPermission">
+        select pid,permissionName,url from permission
+        where pid not in (select permissionId from role_permission where roleId=${id})
+    </select>
+
+    <!--角色详情-->
+    <resultMap id="selById" type="com.itheima.domain.Role">
+        <id column="rid" property="id"></id>
+        <result column="roleName" property="roleName"></result>
+        <result column="roleDesc" property="roleDesc"></result>
+        <collection property="permissions" ofType="com.itheima.domain.Permission">
+            <id column="pid" property="id"></id>
+            <result column="permissionName" property="permissionName"></result>
+            <result column="url" property="url"></result>
+        </collection>
+    </resultMap>
+    <select id="findById" parameterType="java.lang.String" resultType="com.itheima.domain.Role" resultMap="selById">
+        select r.*,p.* from role r
+        left join role_permission rp on r.rid=rp.roleId
+        left join permission p on p.pid=rp.permissionId
+        where rid=#{id}
+    </select>
+
+    <!--users_role角色删除-->
+    <delete id="deleteUsersRoleById" parameterType="java.lang.String">
+        delete from users_role where roleId=#{id}
+    </delete>
+
+    <!--role_permission角色删除-->
+    <delete id="deleteRolePermissionById" parameterType="java.lang.String">
+        delete from role_permission where roleId=#{id}
+    </delete>
+
+    <!--角色删除-->
+    <delete id="deleteById" parameterType="java.lang.String">
+        delete from role where rid=#{id}
+    </delete>
+
+    <!--新建角色-->
+    <insert id="addRole" parameterType="com.itheima.domain.Role">
+        insert into role(rid,roleName,roleDesc) values(#{id},#{roleName},#{roleDesc})
+    </insert>
+
+    <!--查询全部角色信息-->
+    <resultMap id="selAll" type="com.itheima.domain.Role">
+        <id column="rid" property="id"></id>
+        <result column="roleName" property="roleName"></result>
+        <result column="roleDesc" property="roleDesc"></result>
+    </resultMap>
+    <select id="findAll" resultType="com.itheima.domain.Role" resultMap="selAll">
+        select rid,roleName,roleDesc from role
+    </select>
+
+</mapper>

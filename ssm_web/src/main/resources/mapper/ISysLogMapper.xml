@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.ISysLogDao">
+
+    <!--添加日志-->
+    <insert id="addSysLog" parameterType="com.itheima.domain.SysLog">
+        insert into syslog(id,visitTime,username,ip,url,executionTime,method) values(#{id},#{visitTime},#{username},#{ip},#{url},#{executionTime},#{method})
+    </insert>
+
+    <!--查询全部日志，模糊查询-->
+    <select id="findAll" parameterType="java.lang.String" resultType="com.itheima.domain.SysLog">
+        select id,visitTime,username,ip,url,executionTime,method from syslog
+        <where>
+            1=1
+            <if test="fuzzyName!=null and fuzzyName!=''">
+                and username like concat('%',#{fuzzyName},'%')
+            </if>
+        </where>
+        order by visitTime DESC
+    </select>
+
+</mapper>

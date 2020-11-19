@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.itheima.dao.IUserDao">
+
+    <!--用户添加角色-->
+    <insert id="addRoleToUser" parameterType="java.lang.String">
+        insert into users_role(userId,roleId) values(#{userId},#{roleId})
+    </insert>
+
+    <!--添加角色前，查询所有当前该用户没有关联的角色-->
+    <resultMap id="findAllRole" type="com.itheima.domain.Role">
+        <id column="rid" property="id"></id>
+        <result column="roleName" property="roleName"></result>
+        <result column="roleDesc" property="roleDesc"></result>
+    </resultMap>
+    <select id="findUserByIdAndAllRole" parameterType="java.lang.String" resultType="com.itheima.domain.Role" resultMap="findAllRole">
+        select rid,roleName,roleDesc from role
+        where rid not in (select roleId from users_role where userId=#{id})
+    </select>
+
+    <!--用户详情-->
+    <resultMap id="selById" type="com.itheima.domain.UserInfo">
+        <id column="id" property="id"></id>
+        <result column="email" property="email"></result>
+        <result column="username" property="username"></result>
+        <result column="PASSWORD" property="password"></result>
+        <result column="phoneNum" property="phoneNum"></result>
+        <result column="STATUS" property="status"></result>
+        <collection property="roles" ofType="com.itheima.domain.Role">
+            <id column="rid" property="id"></id>
+            <result column="roleName" property="roleName"></result>
+            <result column="roleDesc" property="roleDesc"></result>
+            <collection property="permissions" ofType="com.itheima.domain.Permission">
+                <id column="pid" property="id"></id>
+                <result column="permissionName" property="permissionName"></result>
+                <result column="url" property="url"></result>
+            </collection>
+        </collection>
+    </resultMap>
+    <select id="findById" parameterType="java.lang.String" resultType="com.itheima.domain.UserInfo" resultMap="selById">
+        select u.*,r.*,p.* from users u
+        left join users_role ur on u.id=ur.userId
+        left join role r on r.rid=ur.roleId
+        left join role_permission rp on r.rid=rp.roleId
+        left join permission p on p.pid=rp.permissionId
+        where u.id=#{id}
+    </select>
+
+    <!--添加用户-->
+    <insert id="addUser" parameterType="com.itheima.domain.UserInfo">
+        insert into users(id,email,username,password,phoneNum,status) values(#{id},#{email},#{username},#{password},#{phoneNum},#{status})
+    </insert>
+
+    <!--查询全部用户信息，模糊查询-->
+    <select id="findAll" parameterType="java.lang.String" resultType="com.itheima.domain.UserInfo">
+        select id,username,email,phoneNum,status from users
+        <where>
+            1=1
+            <if test="fuzzyName!=null and fuzzyName!=''">
+                and username like concat('%',#{fuzzyName},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--根据username查询用户信息-->
+    <resultMap id="selByName" type="com.itheima.domain.UserInfo">
+        <id column="id" property="id"></id>
+        <result column="email" property="email"></result>
+        <result column="username" property="username"></result>
+        <result column="PASSWORD" property="password"></result>
+        <result column="phoneNum" property="phoneNum"></result>
+        <result column="STATUS" property="status"></result>
+        <collection property="roles" ofType="com.itheima.domain.Role">
+            <id column="rid" property="id"></id>
+            <result column="roleName" property="roleName"></result>
+            <result column="roleDesc" property="roleDesc"></result>
+        </collection>
+    </resultMap>
+    <select id="findByUserName" parameterType="java.lang.String" resultType="com.itheima.domain.UserInfo" resultMap="selByName">
+        select u.*,r.*from users u
+        left join users_role ur on u.id=ur.userId
+        left join role r on r.rid=ur.roleId
+        where u.username=#{username}
+    </select>
+
+    <update id="modifyUser" parameterType="com.itheima.domain.UserInfo">
+        update users
+        <trim prefix="set" suffixOverrides=",">
+        <if test="email!=null">email=#{email},</if>
+        <if test="password!=null">password=#{password},</if>
+        <if test="phoneNum!=null">phoneNum=#{phoneNum}</if>
+        </trim>
+        where username = #{username}
+    </update>
+</mapper>
